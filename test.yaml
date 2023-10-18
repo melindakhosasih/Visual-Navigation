@@ -1,0 +1,52 @@
+defaults:
+  - /habitat: habitat_config_base
+  - /habitat/task: pointnav
+  - /habitat/simulator/agents:
+    - rgbd_agent
+  - /habitat/dataset/pointnav: gibson
+  - _self_
+  
+habitat:
+  environment:
+    max_episode_steps: 100
+    iterator_options:
+      shuffle: False
+  task:
+    type: Nav-v0
+    reward_measure: distance_to_goal_reward
+    success_measure: spl
+    success_reward: 20
+    slack_reward: -0.01
+    end_on_success: true
+    measurements:
+      distance_to_goal:
+        type: DistanceToGoal
+        distance_to: POINT
+      success:
+        type: Success
+        success_distance: 1
+      spl:
+        type: SPL
+      distance_to_goal_reward:
+        type: DistanceToGoalReward
+      collisions:
+        type: Collisions
+    goal_sensor_uuid: objectgoal
+    count_obj_collisions: true
+  simulator:
+    type: Sim-v0
+    seed: 42
+    forward_step_size: 0.001
+    turn_angle: 1
+    agents:
+      rgbd_agent:
+        sim_sensors:
+          rgb_sensor:
+            width: 256
+            height: 256
+            hfov: 90
+            type: HabitatSimRGBSensor
+  dataset:
+    type: PointNav-v1
+    data_path: "../Neural-Topological-SLAM/data/RL.json.gz"
+    scenes_dir: ""
