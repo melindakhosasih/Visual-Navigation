@@ -1,8 +1,6 @@
-name: habitat
+name: vinav
 channels:
   - defaults
 dependencies:
   - python=3.9
   - cmake=3.14.0
-  # - pip:
-  #   - opencv-python-headless
