@@ -201,14 +201,14 @@ class HabitatEnv(RLEnv):
                 total_step += 1
                 total_reward += reward
 
-                if self.algo == "DDPG":
+                if self.algo == "ddpg":
                     print(f"\rEps:{eps:3d} /{step:4d} /{total_step:6d}| "
                         f"V:{action[0]:+.2f}| W:{action[1]:+.2f}| "
                         f"R:{reward:+.2f}| "
                         f"Loss:[A>{loss_a:+.2f} C>{loss_c:+.2f}]| "
                         f"Epsilon: {self.model.epsilon:.3f}| "
                         f"Ravg:{total_reward/step:.2f}", end='')
-                elif self.algo == "SAC":
+                elif self.algo == "sac":
                     print(f"\rEps:{eps:3d} /{step:4d} /{total_step:6d}| "
                         f"V:{action[0]:+.2f}| W:{action[1]:+.2f}| "
                         f"R:{reward:+.2f}| "

@@ -8,7 +8,8 @@ from habitat.config.default_structured_configs import (
 )
 
 import model.model as model
-from algo import DDPG, SAC
+from algo.ddpg import DDPG
+from algo.sac import SAC
 from env import HabitatEnv
 
 os.environ["MAGNUM_LOG"] = "quiet"
@@ -17,7 +18,7 @@ os.environ["HABITAT_SIM_LOG"] = "quiet"
 def parse_arg():
     parser = argparse.ArgumentParser()
     parser.add_argument("--title", type=str, required=True, help="Experiment's Title")
-    parser.add_argument("--algo", default="DDPG", type=str, help="RL Algorithm")
+    parser.add_argument("--algo", default="ddpg", type=str, help="RL Algorithm")
     parser.add_argument("--config", default="./test.yaml", type=str, help="habitat config's path")
     args = parser.parse_args()
     return args
@@ -30,7 +31,7 @@ if __name__ == "__main__":
     if not os.path.exists(out_path):
         os.makedirs(out_path)
 
-    if args.algo == "DDPG":
+    if args.algo == "ddpg":
         model = DDPG(
             model = [model.PolicyNet, model.QNet],
                 learning_rate = [0.0001, 0.0001],
@@ -38,7 +39,7 @@ if __name__ == "__main__":
                 memory_size = 10000,
                 batch_size = 64
         )
-    elif args.algo == "SAC":
+    elif args.algo == "sac":
          model = SAC(
             model = [model.PolicyNetGaussian, model.QNet],
             n_actions = 2,
