@@ -358,11 +358,10 @@ if __name__ == "__main__":
     total_step = 0
     for eps in range(1200):
         env.reset()
-        print('start')
+        print(f"EP: {eps}")
         while not env._env._episode_over:
             # Choose action
             key = cv2.waitKey(0)
-            
             if key == ord("w") or key == ord("W"):
                 # print("move forward")
                 action = [1, 0]
@@ -386,9 +385,6 @@ if __name__ == "__main__":
             if key == 27: # ESC button
                 env.step({"action": "stop"}) 
 
-            # Debug
-            # print("done", done, "over", self._env._episode_over)
-            # print(state_next, info)
             frame = env.render(obs)
             cv2.imshow("RGB", frame)
     cv2.destroyAllWindows()

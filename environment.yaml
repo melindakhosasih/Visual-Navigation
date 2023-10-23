@@ -4,3 +4,7 @@ channels:
 dependencies:
   - python=3.9
   - cmake=3.14.0
+  - pip:
+    - pandas==2.1.1
+    - torchsummary==1.5.1
+    - torchmetrics==0.11.4
