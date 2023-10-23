@@ -317,3 +317,78 @@ class HabitatEnv(RLEnv):
         # Overlay numeric metrics onto frame
         frame = overlay_frame(frame, map_info)
         return frame
+
+if __name__ == "__main__":
+    import os
+    import cv2
+    import habitat
+    from habitat.config.default_structured_configs import (
+        FogOfWarConfig,
+        TopDownMapMeasurementConfig,
+    )
+
+    os.environ["MAGNUM_LOG"] = "quiet"
+    os.environ["HABITAT_SIM_LOG"] = "quiet"
+    config = habitat.get_config(
+        config_path="./test.yaml"
+    )
+
+    with habitat.config.read_write(config):
+        config.habitat.task.measurements.update(
+            {
+                "top_down_map": TopDownMapMeasurementConfig(
+                    map_padding=3,
+                    map_resolution=1024,
+                    draw_source=True,
+                    draw_border=True,
+                    draw_shortest_path=True,
+                    draw_view_points=True,
+                    draw_goal_positions=True,
+                    draw_goal_aabbs=True,
+                    fog_of_war=FogOfWarConfig(
+                        draw=True,
+                        visibility_dist=5.0,
+                        fov=90,
+                    ),
+                )
+            }
+        )
+
+    env = HabitatEnv(model=None, config=config, algo=None)
+    total_step = 0
+    for eps in range(1200):
+        env.reset()
+        print('start')
+        while not env._env._episode_over:
+            # Choose action
+            key = cv2.waitKey(0)
+            
+            if key == ord("w") or key == ord("W"):
+                # print("move forward")
+                action = [1, 0]
+            elif key == ord("a") or key == ord("A"):
+                # print("turn left")
+                action = [-1, -1]
+            elif key == ord("s") or key == ord("S"):
+                # print("move backward")
+                action = [-1, 0]
+            elif key == ord("d") or key == ord("D"):
+                # print("turn right")
+                action = [-1, 1]
+            else:
+                action = [-1, 0]
+
+            # Step
+            state_next, reward, done, info, obs = env.step({
+                "action": env.translate_action(action)
+            })
+
+            if key == 27: # ESC button
+                env.step({"action": "stop"}) 
+
+            # Debug
+            # print("done", done, "over", self._env._episode_over)
+            # print(state_next, info)
+            frame = env.render(obs)
+            cv2.imshow("RGB", frame)
+    cv2.destroyAllWindows()

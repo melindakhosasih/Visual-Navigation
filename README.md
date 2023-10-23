@@ -44,3 +44,7 @@
 - Train sac
 
     python train.py --title test --algo sac
+
+## Demo
+
+    python env.py
