@@ -40,9 +40,9 @@ class DDPG():
         self.critic_target = cnet().to(self.device)
         self.critic_target.eval()
         
-    def save_load_model(self, op, path):
-        anet_path = path + "ddpg_anet.pt"
-        cnet_path = path + "ddpg_cnet.pt"
+    def save_load_model(self, op, path, epi):
+        anet_path = path + f"ddpg_anet_{epi.zfill(4)}.pt"
+        cnet_path = path + f"ddpg_cnet_{epi.zfill(4)}.pt"
         if op == "save":
             torch.save(self.critic.state_dict(), cnet_path)
             torch.save(self.actor.state_dict(), anet_path)
