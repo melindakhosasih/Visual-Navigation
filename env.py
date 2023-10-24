@@ -48,7 +48,7 @@ class HabitatEnv(RLEnv):
         reward_orien = abs(curr_deg)
 
         # Total Reward
-        reward = 0.1 * reward_dist - 0.1 * reward_orien
+        reward = 0.1 * reward_dist - 0.3 * reward_orien
         
         # Check collision
         collision = self._env.get_metrics()["collisions"]
@@ -60,8 +60,6 @@ class HabitatEnv(RLEnv):
             reward = 20
         elif curr_dist > 5:
             reward += -0.1
-        if reward < -2:
-            reward = -2
         return reward
 
     def get_done(self, observations: Observations) -> bool:
@@ -246,7 +244,7 @@ class HabitatEnv(RLEnv):
                 if success_rate >= max_success_rate:
                     max_success_rate = success_rate
                     print("Save model to " + model_path)
-                    self.model.save_load_model("save", model_path)
+                    self.model.save_load_model("save", model_path, eps)
                 print(f"Success Rate (current/max): {success_rate}/{max_success_rate}")
                 # output video
                 self.eval(self.model, total_eps=5, video_path=model_path+"videos/", video_name=f"{self.algo}_"+str(eps).zfill(4), message=True)
