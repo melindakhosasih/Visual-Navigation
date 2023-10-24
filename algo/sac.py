@@ -49,8 +49,8 @@ class SAC():
             self.alpha_optim = optim.Adam([self.log_alpha], lr=0.0001)
     
     def save_load_model(self, op, path, epi):
-        anet_path = path + f"sac_anet_{epi.zfill(4)}.pt"
-        cnet_path = path + f"sac_cnet_{epi.zfill(4)}.pt"
+        anet_path = path + f"sac_anet_{str(epi).zfill(4)}.pt"
+        cnet_path = path + f"sac_cnet_{str(epi).zfill(4)}.pt"
         if op == "save":
             torch.save(self.critic.state_dict(), cnet_path)
             torch.save(self.actor.state_dict(), anet_path)
