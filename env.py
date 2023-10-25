@@ -35,6 +35,7 @@ class HabitatEnv(RLEnv):
         self.resnet = models.resnet18(pretrained=True).to(self.device)
         self.success_distance = self._env._config.task.measurements.success.success_distance
         self.action_info = None
+        self.prev_orien = None
 
     def get_reward_range(self):
         return -2, 20
@@ -312,8 +313,10 @@ class HabitatEnv(RLEnv):
         frame = observations_to_image(obs, map_info)
         # Remove top_down_map from metrics
         map_info.pop("top_down_map")
+        map_info["orien_to_goal_reward"] = -abs(obs["pointgoal_with_gps_compass"][1])
         # Overlay numeric metrics onto frame
-        frame = overlay_frame(frame, map_info)
+        frame_bgr = overlay_frame(frame, map_info)
+        frame = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
         return frame
 
 if __name__ == "__main__":
@@ -328,7 +331,7 @@ if __name__ == "__main__":
     os.environ["MAGNUM_LOG"] = "quiet"
     os.environ["HABITAT_SIM_LOG"] = "quiet"
     config = habitat.get_config(
-        config_path="./test.yaml"
+        config_path="./demo.yaml"
     )
 
     with habitat.config.read_write(config):
