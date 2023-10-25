@@ -19,6 +19,7 @@ def parse_arg():
     parser = argparse.ArgumentParser()
     parser.add_argument("--title", type=str, required=True, help="Experiment's Title")
     parser.add_argument("--algo", default="ddpg", type=str, help="RL Algorithm")
+    parser.add_argument("--reward_decay", default=0.99, type=float, help="Reward decay rate")
     parser.add_argument("--config", default="./test.yaml", type=str, help="habitat config's path")
     args = parser.parse_args()
     return args
@@ -35,7 +36,7 @@ if __name__ == "__main__":
         model = DDPG(
             model = [model.PolicyNet, model.QNet],
                 learning_rate = [0.0001, 0.0001],
-                reward_decay = 0.99,
+                reward_decay = args.reward_decay,
                 memory_size = 10000,
                 batch_size = 64
         )
@@ -44,7 +45,7 @@ if __name__ == "__main__":
             model = [model.PolicyNetGaussian, model.QNet],
             n_actions = 2,
             learning_rate = [0.0001, 0.0001],
-            reward_decay = 0.99,
+            reward_decay = args.reward_decay,
             memory_size = 10000,
             batch_size = 64,
             alpha = 0.1,
