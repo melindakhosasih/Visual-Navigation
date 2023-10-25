@@ -328,8 +328,7 @@ class HabitatEnv(RLEnv):
         map_info["total_reward"] = self.total_reward
 
         # Overlay numeric metrics onto frame
-        frame_bgr = overlay_frame(frame, map_info)
-        frame = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+        frame = overlay_frame(frame, map_info)
         return frame
 
 if __name__ == "__main__":
@@ -399,6 +398,7 @@ if __name__ == "__main__":
             if key == 27: # ESC button
                 env.step({"action": "stop"}) 
 
-            frame = env.render(obs)
+            frame_bgr = env.render(obs)
+            frame = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
             cv2.imshow("RGB", frame)
     cv2.destroyAllWindows()
