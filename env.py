@@ -35,7 +35,9 @@ class HabitatEnv(RLEnv):
         self.resnet = models.resnet18(pretrained=True).to(self.device)
         self.success_distance = self._env._config.task.measurements.success.success_distance
         self.action_info = None
-        self.prev_orien = None
+        self.prev_orien = 0.0
+        self.total_reward = 0.0
+        self.reward_orien = 0.0
 
     def get_reward_range(self):
         return -2, 20
@@ -43,25 +45,26 @@ class HabitatEnv(RLEnv):
     def get_reward(self, observations: Observations, *args) -> Any:
         curr_dist, curr_deg = observations["pointgoal_with_gps_compass"]
         # Distance Reward
-        reward_dist = self._env.get_metrics()["distance_to_goal_reward"]
+        self.reward_dist = self._env.get_metrics()["distance_to_goal_reward"]
 
         # Orientation Reward
-        reward_orien = abs(curr_deg)
+        self.reward_orien = self.prev_orien - abs(curr_deg)
+        self.prev_orien = abs(curr_deg)
 
         # Total Reward
-        reward = 0.1 * reward_dist - 0.3 * reward_orien
-        
+        self.total_reward = self.reward_dist + self.reward_orien
+
         # Check collision
-        collision = self._env.get_metrics()["collisions"]
+        collision = self._env.get_metrics()["collisions"]["is_collision"]
 
         if collision:
-            reward -= 0.2
+            self.total_reward -= 0.2
 
         if curr_dist < self.success_distance:
-            reward = 20
+            self.total_reward = 20
         elif curr_dist > 5:
-            reward += -0.1
-        return reward
+            self.total_reward += -0.1
+        return self.total_reward
 
     def get_done(self, observations: Observations) -> bool:
         curr_target_dist = self._env.get_metrics()['distance_to_goal']
@@ -103,6 +106,10 @@ class HabitatEnv(RLEnv):
         obs = super().reset()
         img = obs["rgb"]
         rp = obs["pointgoal_with_gps_compass"]
+
+        self.total_reward = 0.0
+        self.reward_orien = 0.0
+        self.prev_orien = abs(rp[1])
         return self.construct_state(rp, img), obs
     
     def step(self, *args, **kwargs) -> Tuple[Observations, Any, bool, dict]:
@@ -313,7 +320,13 @@ class HabitatEnv(RLEnv):
         frame = observations_to_image(obs, map_info)
         # Remove top_down_map from metrics
         map_info.pop("top_down_map")
-        map_info["orien_to_goal_reward"] = -abs(obs["pointgoal_with_gps_compass"][1])
+
+        # Add orientation reward
+        map_info["orien_to_goal_reward"] = self.reward_orien
+
+        # Add total reward
+        map_info["total_reward"] = self.total_reward
+
         # Overlay numeric metrics onto frame
         frame_bgr = overlay_frame(frame, map_info)
         frame = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
@@ -325,7 +338,7 @@ if __name__ == "__main__":
     import habitat
     from habitat.config.default_structured_configs import (
         FogOfWarConfig,
-        TopDownMapMeasurementConfig,
+        TopDownMapMeasurementConfig
     )
 
     os.environ["MAGNUM_LOG"] = "quiet"
