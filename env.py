@@ -137,7 +137,7 @@ class HabitatEnv(RLEnv):
         self.action_info = f"action[0]: {forward * 0.001:.3f}m, action[1]: {round(action[1] / 0.1)}"
         return tuple(action_lists)
 
-    def plot_fig(self, overall_succ_rate, succ_rate_split, model_path, eval_eps):
+    def plot_fig(self, overall_succ_rate, succ_rate_split, path, eval_eps):
         plt.plot(overall_succ_rate, label="Overall Training Succ")
         plt.plot(succ_rate_split, label=f"Avg of {eval_eps} Episodes", linestyle='--')
 
@@ -145,10 +145,10 @@ class HabitatEnv(RLEnv):
         plt.ylabel('Succ')
         plt.legend()
 
-        plt.savefig(f'{model_path}/training.png')
+        plt.savefig(f'{path}/training.png')
         plt.close()   
     
-    def train(self, model_path, n_epi=1000, batch_size=64, n_eval=50):
+    def train(self, out_path, n_epi=1000, batch_size=64, n_eval=50):
         torch.cuda.empty_cache()
         total_step = 0
         max_success_rate = 0
@@ -233,7 +233,7 @@ class HabitatEnv(RLEnv):
             overall_succ_rate.append(np.mean(total_succ_rate))
             succ_rate_split.append(np.mean(total_succ_rate[-n_eval:]))
             
-            self.plot_fig(overall_succ_rate, succ_rate_split, model_path, n_eval)
+            self.plot_fig(overall_succ_rate, succ_rate_split, out_path, n_eval)
 
             if eps>0 and eps%n_eval==0:
                 # Sucess rate
@@ -243,11 +243,11 @@ class HabitatEnv(RLEnv):
                 # Save the best model
                 if success_rate >= max_success_rate:
                     max_success_rate = success_rate
-                    print("Save model to " + model_path)
-                    self.model.save_load_model("save", model_path, eps)
+                    print("Save model to " + out_path+"models/")
+                    self.model.save_load_model("save", out_path+"models/", eps)
                 print(f"Success Rate (current/max): {success_rate}/{max_success_rate}")
                 # output video
-                self.eval(self.model, total_eps=5, video_path=model_path+"videos/", video_name=f"{self.algo}_"+str(eps).zfill(4), message=True)
+                self.eval(self.model, total_eps=5, video_path=out_path+"videos/", video_name=f"{self.algo}_"+str(eps).zfill(4), message=True)
     
     def eval(self, model, video_path, video_name, total_eps=3, message=False):
         if not os.path.exists(video_path):

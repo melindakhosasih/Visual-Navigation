@@ -79,5 +79,5 @@ if __name__ == "__main__":
         )
 
     env = HabitatEnv(model=model, config=config, algo=args.algo)
-    env.train(model_path=out_path, batch_size=64, n_epi=2501, n_eval=50)
+    env.train(out_path=out_path, batch_size=64, n_epi=2501, n_eval=50)
     print("Finished!!!")

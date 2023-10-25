@@ -1,3 +1,4 @@
+import os
 import numpy as np
 
 import torch
@@ -52,6 +53,8 @@ class SAC():
         anet_path = path + f"sac_anet_{str(epi).zfill(4)}.pt"
         cnet_path = path + f"sac_cnet_{str(epi).zfill(4)}.pt"
         if op == "save":
+            if not os.path.exists(path):
+                os.makedirs(path)
             torch.save(self.critic.state_dict(), cnet_path)
             torch.save(self.actor.state_dict(), anet_path)
         elif op == "load":
