@@ -93,6 +93,9 @@ class HabitatEnv(RLEnv):
 
         # relative pose
         return rp
+    
+        # relative pose and image
+        return [rp, img]
 
         # resnet
         # img_ts = preprocess(img)

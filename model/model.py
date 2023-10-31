@@ -1,20 +1,24 @@
-import numpy as np
-
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
+
 from torch.distributions import Normal
+from torch.vision import resnet18, Resnet18_Weights
 
 class PolicyNet(nn.Module):
     def __init__(self):
         super(PolicyNet, self).__init__()
-        self.fc1 = nn.Linear(3, 512)
+        # Initialize resnet18 with pretrained weight
+        self.resnet = resnet18(weights=Resnet18_Weights)
+        # Remove final fully connected layer
+        self.resnet = torch.nn.Sequential(*(list(self.resnet.children())[:-1]))
+        self.fc1 = nn.Linear(512 + 3, 512)
         self.fc2 = nn.Linear(512, 512)
         self.fc3 = nn.Linear(512, 512)
         self.fc4 = nn.Linear(512, 2)
 
-    def forward(self, s):
+    def forward(self, rp, img):
+        s = torch.cat([rp, self.resnet(img)], dim=1)
         h_fc1 = F.relu(self.fc1(s))
         h_fc2 = F.relu(self.fc2(h_fc1))
         h_fc3 = F.relu(self.fc3(h_fc2))
@@ -28,13 +32,18 @@ epsilon = 1e-6
 class PolicyNetGaussian(nn.Module):
     def __init__(self):
         super(PolicyNetGaussian, self).__init__()
-        self.fc1 = nn.Linear(3, 512)
+        # Initialize resnet18 with pretrained weight
+        self.resnet = resnet18(weights=Resnet18_Weights)
+        # Remove final fully connected layer
+        self.resnet = torch.nn.Sequential(*(list(self.resnet.children())[:-1]))
+        self.fc1 = nn.Linear(512 + 3, 512)
         self.fc2 = nn.Linear(512, 512)
         self.fc3 = nn.Linear(512, 512)
         self.fc4_mean = nn.Linear(512, 2)
         self.fc4_logstd = nn.Linear(512, 2)
 
-    def forward(self, s):
+    def forward(self, rp, img):
+        s = torch.cat([rp, self.resnet(img)], dim=1)
         h_fc1 = F.relu(self.fc1(s))
         h_fc2 = F.relu(self.fc2(h_fc1))
         h_fc3 = F.relu(self.fc3(h_fc2))
@@ -59,12 +68,17 @@ class PolicyNetGaussian(nn.Module):
 class QNet(nn.Module):
     def __init__(self):
         super(QNet, self).__init__()
-        self.fc1 = nn.Linear(3, 512)
+        # Initialize resnet18 with pretrained weight
+        self.resnet = resnet18(weights=Resnet18_Weights)
+        # Remove final fully connected layer
+        self.resnet = torch.nn.Sequential(*(list(self.resnet.children())[:-1]))
+        self.fc1 = nn.Linear(512 + 3, 512)
         self.fc2 = nn.Linear(512+2, 512)
         self.fc3 = nn.Linear(512, 512)
         self.fc4 = nn.Linear(512, 1)
     
-    def forward(self, s, a):
+    def forward(self, rp, img, a):
+        s = torch.cat([rp, self.resnet(img)], dim=1)
         h_fc1 = F.relu(self.fc1(s))
         h_fc1_a = torch.cat((h_fc1, a), 1)
         h_fc2 = F.relu(self.fc2(h_fc1_a))

@@ -63,11 +63,11 @@ class SAC():
             self.actor.load_state_dict(torch.load(anet_path, map_location=self.device))
 
     def choose_action(self, s, eval=False):
-        s_ts = torch.FloatTensor(np.expand_dims(s,0)).to(self.device)
+        rp_ts = torch.FloatTensor(np.expand_dims(s[0], 0)).to(self.device)
         if eval == False:
-            action, _, _ = self.actor.sample(s_ts)
+            action, _, _ = self.actor.sample(rp_ts, s[1].to(self.device))
         else:
-            _, _, action = self.actor.sample(s_ts)
+            _, _, action = self.actor.sample(rp_ts, s[1].to(self.device))
         
         action = action.cpu().detach().numpy()[0]
         return action
