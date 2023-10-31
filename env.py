@@ -84,11 +84,12 @@ class HabitatEnv(RLEnv):
 
     def construct_state(self, rp, img):
         rp = np.array([rp[0]/10, np.cos(rp[1]), np.sin(rp[1])])
-        # relative pose
-        # return rp
-    
+        state = {
+            "rp": rp,
+            "obs": img
+        }
         # relative pose and image
-        return [rp, img]
+        return state
             
     def reset(self) -> Observations:
         """

@@ -60,10 +60,12 @@ class DDPG():
         transform = transforms.Compose([
             transforms.ToTensor()
         ])
-        rp_ts = torch.FloatTensor(np.expand_dims(s[0], 0)).to(self.device)
-        img_ts = transform(s[1]).unsqueeze(0).to(self.device)
+        s_ts = {
+            "rp": torch.FloatTensor(np.expand_dims(s["rp"], 0)).to(self.device),
+            "obs": transform(s["obs"]).unsqueeze(0).to(self.device)
+        }
 
-        action = self.actor(rp_ts, img_ts)
+        action = self.actor(s_ts)
         action = action.cpu().detach().numpy()[0]
         
         if eval == False:
@@ -80,17 +82,27 @@ class DDPG():
 
     def store_transition(self, s, a, r, sn, end):
         if self.memory_counter <= self.memory_size:
-            self.memory["s"].append(s)
+            for key in s:
+                if key in self.memory["s"]:
+                    self.memory["s"][key].append(s[key])
+                else:
+                    self.memory["s"][key] = [s[key]]
+            for key in sn:
+                if key in self.memory["sn"]:
+                    self.memory["sn"][key].append(sn[key])
+                else:
+                    self.memory["sn"][key] = [sn[key]]
             self.memory["a"].append(a)
             self.memory["r"].append(r)
-            self.memory["sn"].append(sn)
             self.memory["end"].append(end)
         else:
             index = self.memory_counter % self.memory_size
-            self.memory["s"][index] = s
+            for key in s:
+                self.memory["s"][key] = [s[key]]
+            for key in sn:
+                self.memory["sn"][key] = [sn[key]]
             self.memory["a"][index] = a
             self.memory["r"][index] = r
-            self.memory["sn"][index] = sn
             self.memory["end"][index] = end
 
         self.memory_counter += 1
@@ -108,18 +120,28 @@ class DDPG():
         else:
             sample_index = np.random.choice(self.memory_counter, size=self.batch_size)
         
-        s_batch = [self.memory["s"][index] for index in sample_index]
         a_batch = [self.memory["a"][index] for index in sample_index]
         r_batch = [self.memory["r"][index] for index in sample_index]
-        sn_batch = [self.memory["sn"][index] for index in sample_index]
         end_batch = [self.memory["end"][index] for index in sample_index]
+        s_batch = {key: [self.memory["s"][key][index] for index in sample_index] for key in self.memory["s"]}
+        sn_batch = {key: [self.memory["sn"][key][index] for index in sample_index] for key in self.memory["sn"]}
 
         # Construct torch tensor
-        s_ts = torch.FloatTensor(np.array(s_batch)).to(self.device)
+        s_ts, sn_ts = {}, {}
+        transform = transforms.Compose([
+            transforms.ToTensor()
+        ])
         a_ts = torch.FloatTensor(np.array(a_batch)).to(self.device)
         r_ts = torch.FloatTensor(np.array(r_batch)).to(self.device).view(self.batch_size, 1)
-        sn_ts = torch.FloatTensor(np.array(sn_batch)).to(self.device)
         end_ts = torch.FloatTensor(np.array(end_batch)).to(self.device).view(self.batch_size, 1)
+        s_ts = {
+            "rp": torch.FloatTensor(np.array(s_batch["rp"])).to(self.device),
+            "obs": torch.stack([transform(img) for img in s_batch["obs"]], dim=0).to(self.device)
+        }
+        sn_ts = {
+            "rp": torch.FloatTensor(np.array(sn_batch["rp"])).to(self.device),
+            "obs": torch.stack([transform(img) for img in sn_batch["obs"]], dim=0).to(self.device)
+        }
         
         # TD-target
         with torch.no_grad():

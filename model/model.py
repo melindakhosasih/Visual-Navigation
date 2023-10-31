@@ -17,10 +17,11 @@ class PolicyNet(nn.Module):
         self.fc3 = nn.Linear(512, 512)
         self.fc4 = nn.Linear(512, 2)
 
-    def forward(self, rp, img):
-        res_img = self.resnet(img)
-        res_img = res_img.view(res_img.size(0), -1)
-        s = torch.cat((rp, res_img), dim=1)
+    def forward(self, state):
+        s = state.copy()
+        s["obs"] = self.resnet(s["obs"])
+        s["obs"] = s["obs"].view(s["obs"].size(0), -1)
+        s = torch.cat((s["rp"], s["obs"]), dim=1)
         h_fc1 = F.relu(self.fc1(s))
         h_fc2 = F.relu(self.fc2(h_fc1))
         h_fc3 = F.relu(self.fc3(h_fc2))
@@ -44,10 +45,11 @@ class PolicyNetGaussian(nn.Module):
         self.fc4_mean = nn.Linear(512, 2)
         self.fc4_logstd = nn.Linear(512, 2)
 
-    def forward(self, rp, img):
-        res_img = self.resnet(img)
-        res_img = res_img.view(res_img.size(0), -1)
-        s = torch.cat((rp, res_img), dim=1)
+    def forward(self, state):
+        s = state.copy()
+        s["obs"] = self.resnet(s["obs"])
+        s["obs"] = s["obs"].view(s["obs"].size(0), -1)
+        s = torch.cat((s["rp"], s["obs"]), dim=1)
         h_fc1 = F.relu(self.fc1(s))
         h_fc2 = F.relu(self.fc2(h_fc1))
         h_fc3 = F.relu(self.fc3(h_fc2))
@@ -56,8 +58,8 @@ class PolicyNetGaussian(nn.Module):
         a_logstd = torch.clamp(a_logstd, min=LOG_SIG_MIN, max=LOG_SIG_MAX)
         return a_mean, a_logstd
     
-    def sample(self, rp, img):
-        a_mean, a_logstd = self.forward(rp, img)
+    def sample(self, state):
+        a_mean, a_logstd = self.forward(state)
         a_std = a_logstd.exp()
         normal = Normal(a_mean, a_std)
         x_t = normal.rsample()
@@ -81,10 +83,11 @@ class QNet(nn.Module):
         self.fc3 = nn.Linear(512, 512)
         self.fc4 = nn.Linear(512, 1)
     
-    def forward(self, rp, img, a):
-        res_img = self.resnet(img)
-        res_img = res_img.view(res_img.size(0), -1)
-        s = torch.cat((rp, res_img), dim=1)
+    def forward(self, state, a):
+        s = state.copy()
+        s["obs"] = self.resnet(s["obs"])
+        s["obs"] = s["obs"].view(s["obs"].size(0), -1)
+        s = torch.cat((s["rp"], s["obs"]), dim=1)
         h_fc1 = F.relu(self.fc1(s))
         h_fc1_a = torch.cat((h_fc1, a), 1)
         h_fc2 = F.relu(self.fc2(h_fc1_a))
