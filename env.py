@@ -92,7 +92,7 @@ class HabitatEnv(RLEnv):
         ])
 
         # relative pose
-        return rp
+        # return rp
     
         # relative pose and image
         return [rp, img]
