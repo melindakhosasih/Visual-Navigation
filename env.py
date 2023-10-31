@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import torch
-from torchvision import models, transforms
 
 from typing import (
     TYPE_CHECKING,
@@ -32,7 +31,6 @@ class HabitatEnv(RLEnv):
         self.model = model
         self.algo = algo
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.resnet = models.resnet18(pretrained=True).to(self.device)
         self.success_distance = self._env._config.task.measurements.success.success_distance
         self.action_info = None
         self.prev_orien = 0.0
@@ -86,30 +84,11 @@ class HabitatEnv(RLEnv):
 
     def construct_state(self, rp, img):
         rp = np.array([rp[0]/10, np.cos(rp[1]), np.sin(rp[1])])
-        norm_img = img.astype(np.float32) / 255.0
-        preprocess = transforms.Compose([
-            transforms.ToTensor()
-        ])
-
         # relative pose
         # return rp
     
         # relative pose and image
         return [rp, img]
-
-        # resnet
-        # img_ts = preprocess(img)
-        # img_ts = img_ts.unsqueeze(0).to(self.device)
-        # resnet_img = self.resnet(img_ts).cpu()
-        # np_img = resnet_img.detach().numpy()
-        # np_img = np_img.reshape(-1)
-        # state = np.concatenate((rp, np_img))
-        # return state
-
-        # img
-        # norm_img = norm_img.flatten()   # shape (196608,)
-        # state = np.concatenate((rp, norm_img))  # shape (196611,)
-        # return state
             
     def reset(self) -> Observations:
         """

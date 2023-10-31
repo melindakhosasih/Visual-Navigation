@@ -5,6 +5,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from torchvision import transforms
+
 class SAC():
     def __init__(
         self,
@@ -63,11 +65,16 @@ class SAC():
             self.actor.load_state_dict(torch.load(anet_path, map_location=self.device))
 
     def choose_action(self, s, eval=False):
+        transform = transforms.Compose([
+            transforms.ToTensor()
+        ])
         rp_ts = torch.FloatTensor(np.expand_dims(s[0], 0)).to(self.device)
+        img_ts = transform(s[1]).unsqueeze(0).to(self.device)
+        
         if eval == False:
-            action, _, _ = self.actor.sample(rp_ts, s[1].to(self.device))
+            action, _, _ = self.actor.sample(rp_ts, img_ts)
         else:
-            _, _, action = self.actor.sample(rp_ts, s[1].to(self.device))
+            _, _, action = self.actor.sample(rp_ts, img_ts)
         
         action = action.cpu().detach().numpy()[0]
         return action

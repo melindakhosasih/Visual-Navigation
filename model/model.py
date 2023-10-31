@@ -3,22 +3,24 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from torch.distributions import Normal
-from torch.vision import resnet18, Resnet18_Weights
+from torchvision.models import resnet18, ResNet18_Weights
 
 class PolicyNet(nn.Module):
     def __init__(self):
         super(PolicyNet, self).__init__()
         # Initialize resnet18 with pretrained weight
-        self.resnet = resnet18(weights=Resnet18_Weights)
+        self.resnet = resnet18(weights=ResNet18_Weights)
         # Remove final fully connected layer
         self.resnet = torch.nn.Sequential(*(list(self.resnet.children())[:-1]))
-        self.fc1 = nn.Linear(512 + 3, 512)
+        self.fc1 = nn.Linear(512+3, 512)
         self.fc2 = nn.Linear(512, 512)
         self.fc3 = nn.Linear(512, 512)
         self.fc4 = nn.Linear(512, 2)
 
     def forward(self, rp, img):
-        s = torch.cat([rp, self.resnet(img)], dim=1)
+        res_img = self.resnet(img)
+        res_img = res_img.view(res_img.size(0), -1)
+        s = torch.cat((rp, res_img), dim=1)
         h_fc1 = F.relu(self.fc1(s))
         h_fc2 = F.relu(self.fc2(h_fc1))
         h_fc3 = F.relu(self.fc3(h_fc2))
@@ -33,17 +35,19 @@ class PolicyNetGaussian(nn.Module):
     def __init__(self):
         super(PolicyNetGaussian, self).__init__()
         # Initialize resnet18 with pretrained weight
-        self.resnet = resnet18(weights=Resnet18_Weights)
+        self.resnet = resnet18(weights=ResNet18_Weights)
         # Remove final fully connected layer
         self.resnet = torch.nn.Sequential(*(list(self.resnet.children())[:-1]))
-        self.fc1 = nn.Linear(512 + 3, 512)
+        self.fc1 = nn.Linear(512+3, 512)
         self.fc2 = nn.Linear(512, 512)
         self.fc3 = nn.Linear(512, 512)
         self.fc4_mean = nn.Linear(512, 2)
         self.fc4_logstd = nn.Linear(512, 2)
 
     def forward(self, rp, img):
-        s = torch.cat([rp, self.resnet(img)], dim=1)
+        res_img = self.resnet(img)
+        res_img = res_img.view(res_img.size(0), -1)
+        s = torch.cat((rp, res_img), dim=1)
         h_fc1 = F.relu(self.fc1(s))
         h_fc2 = F.relu(self.fc2(h_fc1))
         h_fc3 = F.relu(self.fc3(h_fc2))
@@ -52,8 +56,8 @@ class PolicyNetGaussian(nn.Module):
         a_logstd = torch.clamp(a_logstd, min=LOG_SIG_MIN, max=LOG_SIG_MAX)
         return a_mean, a_logstd
     
-    def sample(self, s):
-        a_mean, a_logstd = self.forward(s)
+    def sample(self, rp, img):
+        a_mean, a_logstd = self.forward(rp, img)
         a_std = a_logstd.exp()
         normal = Normal(a_mean, a_std)
         x_t = normal.rsample()
@@ -69,16 +73,18 @@ class QNet(nn.Module):
     def __init__(self):
         super(QNet, self).__init__()
         # Initialize resnet18 with pretrained weight
-        self.resnet = resnet18(weights=Resnet18_Weights)
+        self.resnet = resnet18(weights=ResNet18_Weights)
         # Remove final fully connected layer
         self.resnet = torch.nn.Sequential(*(list(self.resnet.children())[:-1]))
-        self.fc1 = nn.Linear(512 + 3, 512)
+        self.fc1 = nn.Linear(512+3, 512)
         self.fc2 = nn.Linear(512+2, 512)
         self.fc3 = nn.Linear(512, 512)
         self.fc4 = nn.Linear(512, 1)
     
     def forward(self, rp, img, a):
-        s = torch.cat([rp, self.resnet(img)], dim=1)
+        res_img = self.resnet(img)
+        res_img = res_img.view(res_img.size(0), -1)
+        s = torch.cat((rp, res_img), dim=1)
         h_fc1 = F.relu(self.fc1(s))
         h_fc1_a = torch.cat((h_fc1, a), 1)
         h_fc2 = F.relu(self.fc2(h_fc1_a))
