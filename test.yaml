@@ -24,7 +24,7 @@ habitat:
         distance_to: POINT
       success:
         type: Success
-        success_distance: 1
+        success_distance: 0.5
       spl:
         type: SPL
       distance_to_goal_reward:
