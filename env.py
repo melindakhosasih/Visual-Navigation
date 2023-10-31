@@ -46,9 +46,18 @@ class HabitatEnv(RLEnv):
         curr_dist, curr_deg = observations["pointgoal_with_gps_compass"]
         # Distance Reward
         self.reward_dist = self._env.get_metrics()["distance_to_goal_reward"]
+        self.reward_dist *= 1
+
+        curr_deg = np.rad2deg(abs(curr_deg))
+        while curr_deg > 180:
+            curr_deg -= 360
+        while curr_deg < -180:
+            curr_deg += 360
+        curr_deg = np.deg2rad(abs(curr_deg))
 
         # Orientation Reward
         self.reward_orien = self.prev_orien - abs(curr_deg)
+        self.reward_orien *= 10
         self.prev_orien = abs(curr_deg)
 
         # Total Reward
@@ -251,8 +260,8 @@ class HabitatEnv(RLEnv):
                 # Save the best model
                 if success_rate >= max_success_rate:
                     max_success_rate = success_rate
-                    print("Save model to " + out_path+"models/")
-                    self.model.save_load_model("save", out_path+"models/", eps)
+                print("Save model to " + out_path+"models/")
+                self.model.save_load_model("save", out_path+"models/", eps)
                 print(f"Success Rate (current/max): {success_rate}/{max_success_rate}")
                 # output video
                 self.eval(self.model, total_eps=5, video_path=out_path+"videos/", video_name=f"{self.algo}_"+str(eps).zfill(4), message=True)
@@ -320,6 +329,9 @@ class HabitatEnv(RLEnv):
         frame = observations_to_image(obs, map_info)
         # Remove top_down_map from metrics
         map_info.pop("top_down_map")
+
+        # Update distance reward
+        map_info["distance_to_goal_reward"] = self.reward_dist
 
         # Add orientation reward
         map_info["orien_to_goal_reward"] = self.reward_orien
