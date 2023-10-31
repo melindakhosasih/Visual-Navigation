@@ -282,7 +282,7 @@ class HabitatEnv(RLEnv):
 
             while True:
                 # Choose action
-                action = self.model.choose_action(state, eval=False)
+                action = self.model.choose_action(state, eval=True)
 
                 # Step
                 state_next, reward, done, info, obs = self.step({"action": self.translate_action(action)})
