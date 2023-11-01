@@ -10,6 +10,8 @@ class PolicyNet(nn.Module):
         super(PolicyNet, self).__init__()
         # Initialize resnet18 with pretrained weight
         self.resnet = resnet18(weights=ResNet18_Weights)
+        for param in self.resnet.parameters():
+            param.requires_grad = True
         # Remove final fully connected layer
         self.resnet = torch.nn.Sequential(*(list(self.resnet.children())[:-1]))
         self.fc1 = nn.Linear(512+3, 512)
@@ -21,6 +23,7 @@ class PolicyNet(nn.Module):
         s = state.copy()
         s["obs"] = self.resnet(s["obs"])
         s["obs"] = s["obs"].view(s["obs"].size(0), -1)
+        s["obs"] = torch.tanh(s["obs"])
         s = torch.cat((s["rp"], s["obs"]), dim=1)
         h_fc1 = F.relu(self.fc1(s))
         h_fc2 = F.relu(self.fc2(h_fc1))
@@ -37,6 +40,8 @@ class PolicyNetGaussian(nn.Module):
         super(PolicyNetGaussian, self).__init__()
         # Initialize resnet18 with pretrained weight
         self.resnet = resnet18(weights=ResNet18_Weights)
+        for param in self.resnet.parameters():
+            param.requires_grad = True
         # Remove final fully connected layer
         self.resnet = torch.nn.Sequential(*(list(self.resnet.children())[:-1]))
         self.fc1 = nn.Linear(512+3, 512)
@@ -49,6 +54,7 @@ class PolicyNetGaussian(nn.Module):
         s = state.copy()
         s["obs"] = self.resnet(s["obs"])
         s["obs"] = s["obs"].view(s["obs"].size(0), -1)
+        s["obs"] = torch.tanh(s["obs"])
         s = torch.cat((s["rp"], s["obs"]), dim=1)
         h_fc1 = F.relu(self.fc1(s))
         h_fc2 = F.relu(self.fc2(h_fc1))
@@ -76,6 +82,8 @@ class QNet(nn.Module):
         super(QNet, self).__init__()
         # Initialize resnet18 with pretrained weight
         self.resnet = resnet18(weights=ResNet18_Weights)
+        for param in self.resnet.parameters():
+            param.requires_grad = True
         # Remove final fully connected layer
         self.resnet = torch.nn.Sequential(*(list(self.resnet.children())[:-1]))
         self.fc1 = nn.Linear(512+3, 512)
@@ -87,6 +95,7 @@ class QNet(nn.Module):
         s = state.copy()
         s["obs"] = self.resnet(s["obs"])
         s["obs"] = s["obs"].view(s["obs"].size(0), -1)
+        s["obs"] = torch.tanh(s["obs"])
         s = torch.cat((s["rp"], s["obs"]), dim=1)
         h_fc1 = F.relu(self.fc1(s))
         h_fc1_a = torch.cat((h_fc1, a), 1)
