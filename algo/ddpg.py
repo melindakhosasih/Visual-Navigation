@@ -78,7 +78,7 @@ class DDPG():
 
     def init_memory(self):
         self.memory_counter = 0
-        self.memory = {"s":[], "a":[], "r":[], "sn":[], "end":[]}
+        self.memory = {"s":{}, "a":[], "r":[], "sn":{}, "end":[]}
 
     def store_transition(self, s, a, r, sn, end):
         if self.memory_counter <= self.memory_size:
@@ -98,9 +98,9 @@ class DDPG():
         else:
             index = self.memory_counter % self.memory_size
             for key in s:
-                self.memory["s"][key] = [s[key]]
+                self.memory["s"][key][index] = s[key]
             for key in sn:
-                self.memory["sn"][key] = [sn[key]]
+                self.memory["sn"][key][index] = sn[key]
             self.memory["a"][index] = a
             self.memory["r"][index] = r
             self.memory["end"][index] = end
