@@ -36,6 +36,7 @@ class HabitatEnv(RLEnv):
         self.prev_orien = 0.0
         self.total_reward = 0.0
         self.reward_orien = 0.0
+        self.reward_dist = 0.0
 
     def get_reward_range(self):
         return -2, 20
@@ -365,8 +366,11 @@ if __name__ == "__main__":
     env = HabitatEnv(model=None, config=config, algo=None)
     total_step = 0
     for eps in range(1200):
-        env.reset()
         print(f"EP: {eps}")
+        _, obs = env.reset()
+        frame_bgr = env.render(obs)
+        frame = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+        cv2.imshow("RGB", frame)
         while not env._env._episode_over:
             # Choose action
             key = cv2.waitKey(0)
@@ -389,7 +393,6 @@ if __name__ == "__main__":
             state_next, reward, done, info, obs = env.step({
                 "action": env.translate_action(action)
             })
-
             if key == 27: # ESC button
                 env.step({"action": "stop"}) 
 
