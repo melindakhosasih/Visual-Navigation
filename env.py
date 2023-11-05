@@ -37,6 +37,7 @@ class HabitatEnv(RLEnv):
         self.total_reward = 0.0
         self.reward_orien = 0.0
         self.reward_dist = 0.0
+        self.collisions_count = 0
 
     def get_reward_range(self):
         return -2, 20
@@ -66,7 +67,10 @@ class HabitatEnv(RLEnv):
         collision = self._env.get_metrics()["collisions"]["is_collision"]
 
         if collision:
-            self.total_reward -= 0.2
+            self.collisions_count += 1
+            self.total_reward -= 0.2 * self.collisions_count
+        else:
+            self.collisions_count = 0
 
         if curr_dist < self.success_distance:
             self.total_reward = 20
@@ -102,6 +106,8 @@ class HabitatEnv(RLEnv):
 
         self.total_reward = 0.0
         self.reward_orien = 0.0
+        self.reward_dist = 0.0
+        self.collisions_count = 0
         self.prev_orien = abs(rp[1])
         return self.construct_state(rp, img), obs
     
@@ -316,6 +322,9 @@ class HabitatEnv(RLEnv):
 
         # Update distance reward
         map_info["distance_to_goal_reward"] = self.reward_dist
+
+        # Update collision count
+        map_info["collisions.count"] = self.collisions_count
 
         # Add orientation reward
         map_info["orien_to_goal_reward"] = self.reward_orien
